@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Lab 3 มิติ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: drafting-table lab — exploded 3D page + DevTools-style inspector, then the worksheet steps */
+:root{
+  --paper:#eef1f5; --surface:#ffffff; --ink:#1a2333; --muted:#5a6477; --line:#d4dae4;
+  --accent:#173b73; --accent-ink:#ffffff; --mark:#b86e0c; --mark-soft:#fbefdc;
+  --stage:#e3e8f0; --grid:rgba(23,59,115,.07); --code-bg:#f5f7fa; --code-ink:#24304a;
+  --t-tag:#1d4fa3; --t-attr:#8a4b08; --t-val:#1f7a4d; --t-punct:#7b8496;
+  --ok:#1f7a4d;
+  --f-display:"Chakra Petch","IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0d121a; --surface:#141b27; --ink:#dde4ee; --muted:#93a0b4; --line:#263042;
+  --accent:#8db0ee; --accent-ink:#0d121a; --mark:#f0a94a; --mark-soft:#2c2213;
+  --stage:#0a0f16; --grid:rgba(141,176,238,.07); --code-bg:#0f1520; --code-ink:#cdd7e6;
+  --t-tag:#8db0ee; --t-attr:#f0b866; --t-val:#7fd3a3; --t-punct:#6f7b90; --ok:#7fd3a3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0d121a; --surface:#141b27; --ink:#dde4ee; --muted:#93a0b4; --line:#263042;
+  --accent:#8db0ee; --accent-ink:#0d121a; --mark:#f0a94a; --mark-soft:#2c2213;
+  --stage:#0a0f16; --grid:rgba(141,176,238,.07); --code-bg:#0f1520; --code-ink:#cdd7e6;
+  --t-tag:#8db0ee; --t-attr:#f0b866; --t-val:#7fd3a3; --t-punct:#6f7b90; --ok:#7fd3a3; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--mark);outline-offset:2px}
+
+.top{display:grid;gap:6px;margin-bottom:20px}
+.eyebrow{font-family:var(--f-mono);font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4.4vw,46px);line-height:1.12;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1 em{font-style:normal;color:var(--mark)}
+.lede{max-width:66ch;color:var(--muted);margin:4px 0 0}
+
+/* ---------- lab ---------- */
+.lab{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:14px;align-items:stretch}
+@media (max-width:900px){.lab{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;min-width:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;background:var(--surface)}
+.viewport{position:relative;flex:1;min-height:0;
+  background-color:var(--stage);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px}
+.stage{height:clamp(500px,72vh,700px)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+.stage canvas.hover{cursor:pointer}
+.stage canvas:active{cursor:grabbing}
+.hint{position:absolute;left:12px;bottom:10px;font-size:12.5px;color:var(--muted);font-family:var(--f-mono);pointer-events:none}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--line)}
+.pill{display:flex;align-items:center;gap:8px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:4px 6px;font-size:13px}
+.seg button{border:0;background:transparent;color:var(--muted);font:500 13px var(--f-body);padding:4px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.pill label{color:var(--muted);padding-left:8px;white-space:nowrap}
+.pill input[type=range]{width:110px;accent-color:var(--mark)}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);outline:1px solid var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{outline:2px solid var(--mark)}
+.pill input[type=color]{width:26px;height:24px;border:0;padding:0;background:transparent;cursor:pointer}
+.ghost{border:0;background:transparent;color:var(--ink);font:500 13px var(--f-body);padding:4px 10px;border-radius:999px;cursor:pointer}
+.ghost:hover{background:var(--code-bg)}
+
+/* inspector */
+.inspector{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;overflow:hidden}
+.ins-head{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-family:var(--f-mono);font-size:12px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.tree{list-style:none;margin:0;padding:8px 6px;border-bottom:1px solid var(--line);font-family:var(--f-mono);font-size:13px;line-height:1.5}
+.tree button{all:unset;display:block;width:100%;box-sizing:border-box;padding:3px 8px;border-radius:6px;cursor:pointer;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tree button:hover{background:var(--code-bg)}
+.tree button[aria-current="true"]{background:var(--mark-soft);color:var(--ink);box-shadow:inset 2px 0 0 var(--mark)}
+.tree button:focus-visible{outline:2px solid var(--mark)}
+.tree .tg{color:var(--t-tag)} .tree .at{color:var(--t-attr)} .tree .vl{color:var(--t-val)}
+.ins-body{padding:14px;display:grid;gap:12px;overflow:auto;min-height:0}
+.ins-body h3{font-family:var(--f-display);font-size:20px;margin:0;line-height:1.2}
+.depth{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.role{margin:0}
+.tip{background:var(--mark-soft);border-radius:8px;padding:8px 12px;font-size:14px;line-height:1.6}
+.tip b{color:var(--mark)}
+.mini-label{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.mini{margin:0;background:var(--code-bg);color:var(--code-ink);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font:13px/1.55 var(--f-mono);overflow-x:auto;white-space:pre}
+.muted{color:var(--muted);font-size:14px}
+
+/* ---------- worksheet ---------- */
+.section-title{font-family:var(--f-display);font-size:clamp(22px,3vw,30px);margin:56px 0 6px;line-height:1.2;text-wrap:balance}
+.section-sub{color:var(--muted);margin:0 0 20px;max-width:66ch}
+.steps{display:grid;gap:0;counter-reset:s}
+.step{display:grid;grid-template-columns:56px minmax(0,1fr);gap:18px;padding:22px 0;border-top:1px solid var(--line)}
+.num{font-family:var(--f-display);font-weight:700;font-size:40px;line-height:1;color:var(--mark)}
+.step h3{font-family:var(--f-display);font-size:22px;margin:0 0 6px;line-height:1.3}
+.step p{margin:0 0 10px;max-width:70ch}
+@media (max-width:560px){.step{grid-template-columns:minmax(0,1fr);gap:4px}.num{font-size:30px}}
+
+.files{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin:8px 0 12px}
+.file{display:flex;gap:10px;align-items:baseline;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 12px;min-width:0}
+.file code{font-family:var(--f-mono);font-size:13.5px;color:var(--t-tag);white-space:nowrap}
+.file span{font-size:14px;color:var(--muted)}
+
+.code{position:relative;margin:10px 0 12px;border:1px solid var(--line);border-radius:10px;background:var(--code-bg);min-width:0}
+.code-bar{display:flex;justify-content:space-between;align-items:center;padding:6px 8px 6px 14px;border-bottom:1px solid var(--line);font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.copy{border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 12px var(--f-body);border-radius:6px;padding:3px 10px;cursor:pointer}
+.code pre{margin:0;padding:12px 14px;overflow-x:auto;font:13.5px/1.6 var(--f-mono);color:var(--code-ink);max-height:520px}
+.t{color:var(--t-tag)} .an{color:var(--t-attr)} .av{color:var(--t-val)} .p{color:var(--t-punct)} .sel{color:var(--t-tag)} .pr{color:var(--t-attr)}
+.note{border-left:3px solid var(--mark);padding:4px 0 4px 12px;font-size:15px;color:var(--ink);margin:8px 0 12px;max-width:70ch}
+.note b{color:var(--mark)}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--f-mono);font-size:13px;margin:4px 0 8px}
+.flow span{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:2px 10px}
+.flow i{font-style:normal;color:var(--muted)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:0}
+td code{font-family:var(--f-mono);font-size:13.5px;color:var(--t-tag);white-space:nowrap}
+tbody tr.link{cursor:pointer}
+tbody tr.link:hover td{background:var(--code-bg)}
+.show3d{font:500 12px var(--f-body);border:1px solid var(--line);background:transparent;color:var(--accent);border-radius:6px;padding:2px 8px;cursor:pointer;white-space:nowrap}
+
+/* checklist */
+.check-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+.card h3{font-family:var(--f-display);font-size:18px;margin:0 0 8px}
+.prog{display:flex;align-items:center;gap:10px;font-family:var(--f-mono);font-size:13px;color:var(--muted);margin-bottom:8px;font-variant-numeric:tabular-nums}
+.bar{flex:1;height:6px;border-radius:3px;background:var(--code-bg);overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.ck{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px dashed var(--line);cursor:pointer;line-height:1.55}
+.ck:first-of-type{border-top:0}
+.ck input{margin-top:5px;accent-color:var(--ok);width:16px;height:16px;flex:none}
+.ck input:checked + span{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--line)}
+.warn{margin-top:10px;font-size:14px;background:var(--mark-soft);border-radius:8px;padding:8px 12px}
+
+details{border-top:1px solid var(--line);padding:4px 0}
+details:last-child{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;padding:10px 0;font-weight:500;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--f-mono);color:var(--mark);font-size:18px;line-height:1}
+details[open] summary::after{content:"−"}
+details p{margin:0 0 12px;color:var(--muted);max-width:70ch}
+
+.src{margin-top:48px;padding-top:16px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+.src a{word-break:break-all}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">วิชาเทคโนโลยีเว็บ · ปริญญาตรี · กิจกรรมเว็บไซต์ส่วนตัว</div>
+    <h1>สร้าง Portfolio หนึ่งหน้า ด้วย <em>HTML</em> และ <em>CSS</em></h1>
+    <p class="lede">หมุนดูหน้าเว็บที่ถูกแยกออกเป็นชั้นตามโครงสร้างแท็ก คลิกแต่ละชั้นเพื่อดูหน้าที่และโค้ด สลับดูผลก่อนและหลังใส่ CSS แล้วลองเปลี่ยนสีหลักของเว็บได้ทันที</p>
+  </header>
+
+  <section class="lab" aria-label="โมเดลหน้าเว็บ 3 มิติ">
+    <div class="stage" id="stage">
+      <div class="controls">
+        <div class="pill seg" role="group" aria-label="โหมดการแสดงผล">
+          <button type="button" id="m-html" aria-pressed="false">HTML ล้วน</button>
+          <button type="button" id="m-css" aria-pressed="true">HTML + CSS</button>
+        </div>
+        <div class="pill">
+          <label for="explode">แยกชั้น</label>
+          <input type="range" id="explode" min="0" max="3" step="0.05" value="1.4">
+        </div>
+        <div class="pill" role="group" aria-label="สีหลักของเว็บ" id="swatches">
+          <label>สีหลัก</label>
+          <button type="button" class="sw" data-c="#173b73" style="background:#173b73" aria-pressed="true" aria-label="สีเดิม #173b73"></button>
+          <button type="button" class="sw" data-c="#6d28d9" style="background:#6d28d9" aria-pressed="false" aria-label="สีม่วง #6d28d9"></button>
+          <button type="button" class="sw" data-c="#0f766e" style="background:#0f766e" aria-pressed="false" aria-label="สีเขียวหัวเป็ด #0f766e"></button>
+          <input type="color" id="custom-color" value="#173b73" aria-label="เลือกสีเอง">
+        </div>
+        <div class="pill">
+          <button type="button" class="ghost" id="v-front">มุมเบราว์เซอร์</button>
+          <button type="button" class="ghost" id="v-angle">มุมแยกชั้น</button>
+        </div>
+      </div>
+      <div class="viewport" id="viewport"><div class="hint" id="hint">ลากเพื่อหมุน · ซูมด้วยล้อเมาส์หรือสองนิ้ว · คลิกชั้นเพื่อดูรายละเอียด</div></div>
+    </div>
+
+    <aside class="inspector" aria-label="ตัวตรวจแท็ก">
+      <div class="ins-head"><span>Elements</span><span id="mode-label">styled</span></div>
+      <ul class="tree" id="tree"></ul>
+      <div class="ins-body" id="ins"></div>
+    </aside>
+  </section>
+
+  <h2 class="section-title">ขั้นตอนการทำ</h2>
+  <p class="section-sub">กิจกรรมนี้ฝึกสร้างเว็บไซต์ส่วนตัวหนึ่งหน้า ตั้งแต่สร้างไฟล์ เขียนเนื้อหา เพิ่มภาพ จัดรูปแบบ และทดสอบในเบราว์เซอร์ เมื่อทำครบจะได้เว็บที่มีเมนู ประวัติ ผลงาน และช่องทางติดต่อ โดยเปิดดูจากเครื่องของตนเองได้</p>
+
+  <div class="steps">
+    <article class="step">
+      <div class="num">1</div>
+      <div>
+        <h3>เตรียมไฟล์และรูปภาพ</h3>
+        <p>เปิด VS Code เลือก File → Open Folder แล้วเปิดโฟลเดอร์ใหม่ชื่อ <code>my-portfolio</code> สร้างไฟล์และจัดวางรูปภาพดังนี้</p>
+        <div class="files">
+          <div class="file"><code>index.html</code><span>โครงสร้างและเนื้อหาเว็บไซต์</span></div>
+          <div class="file"><code>style.css</code><span>สี ขนาด และการจัดวาง</span></div>
+          <div class="file"><code>img/profile.jpg</code><span>รูปประจำตัว</span></div>
+          <div class="file"><code>img/work1.jpg</code><span>ภาพผลงาน</span></div>
+        </div>
+        <p class="note">ตรวจนามสกุลภาพให้ตรงกับโค้ด หากภาพเป็น .png ให้เปลี่ยนตำแหน่งภาพใน <code>src</code> เป็น .png ด้วย <b>ระวังการบันทึกไฟล์เป็น index.html.txt</b></p>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="num">2</div>
+      <div>
+        <h3>ทดลองเปิดหน้าเว็บแรก</h3>
+        <p>พิมพ์โค้ดนี้ใน index.html บันทึก แล้วดับเบิลคลิกไฟล์จากโฟลเดอร์เพื่อเปิดในเบราว์เซอร์</p>
+        <div class="code" data-lang="html" data-src="c-step2" data-name="index.html"></div>
+        <p>ทดลองเปลี่ยนข้อความใน h1 เป็นชื่อตนเอง แล้วทำตามลำดับนี้ทุกครั้ง</p>
+        <div class="flow"><span>แก้โค้ด</span><i>→</i><span>บันทึก</span><i>→</i><span>รีเฟรช</span><i>→</i><span>ดูผล</span></div>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="num">3</div>
+      <div>
+        <h3>สร้างเนื้อหา Portfolio</h3>
+        <p>แทนที่โค้ดเดิมใน index.html ด้วยโค้ดสองส่วนนี้ตามลำดับ ทั้งสองส่วนเป็นไฟล์เดียวกัน แล้วเปลี่ยนข้อมูลให้เป็นของตนเอง</p>
+        <div class="code" data-lang="html" data-src="c-step3a" data-name="index.html · ส่วนที่ 1"></div>
+        <p class="note">จุดสังเกต <code>href="#about"</code> เชื่อมกับ <code>id="about"</code> จึงใช้เมนูเลื่อนไปยังหัวข้อภายในหน้าเดียวกันได้</p>
+        <p>ต่อโค้ดด้านล่างทันทีหลัง <code>&lt;/section&gt;</code> ของส่วนเกี่ยวกับฉัน <b>ห้ามเพิ่มโครงสร้าง html หรือ body ซ้ำ</b></p>
+        <div class="code" data-lang="html" data-src="c-step3b" data-name="index.html · ส่วนที่ 2"></div>
+        <p><b>ตรวจผลหลังเขียน HTML</b> บันทึกไฟล์แล้วรีเฟรช ต้องเห็นชื่อ ประวัติ รูปประจำตัว และภาพผลงาน คลิกเมนูผลงานแล้วหน้าเว็บควรเลื่อนถึงหัวข้อผลงาน ช่วงนี้หน้าตายังเรียบง่ายเพราะยังไม่ได้เพิ่ม CSS (กดปุ่ม <b>HTML ล้วน</b> ในโมเดลด้านบนเพื่อดูหน้าตาช่วงนี้)</p>
+        <p class="note">ลิงก์ <code>mailto</code> ขอเปิดแอปอีเมลที่ตั้งค่าไว้ ไม่ได้ส่งอีเมลอัตโนมัติ ให้เปลี่ยนที่อยู่อีเมลตัวอย่างเป็นที่อยู่จริงก่อนใช้งาน หากต้องการแบบฟอร์มส่งข้อความจริงต้องเชื่อมระบบรับข้อมูลเพิ่มเติม</p>
+
+        <p style="margin-top:16px"><b>หน้าที่ของแท็กที่ใช้</b> คลิกแถวเพื่อดูชั้นนั้นในโมเดล 3 มิติ</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>แท็กหรือคุณสมบัติ</th><th>หน้าที่</th><th></th></tr></thead>
+            <tbody id="tag-table">
+              <tr class="link" data-el="header"><td><code>header</code> และ <code>nav</code></td><td>ส่วนหัวและเมนูนำทาง</td><td><button class="show3d" type="button">ดูใน 3D</button></td></tr>
+              <tr class="link" data-el="main"><td><code>main</code> และ <code>section</code></td><td>เนื้อหาหลักและส่วนตามหัวข้อ</td><td><button class="show3d" type="button">ดูใน 3D</button></td></tr>
+              <tr class="link" data-el="about"><td><code>h1</code> ถึง <code>h3</code> และ <code>p</code></td><td>หัวเรื่อง หัวข้อย่อย และย่อหน้า</td><td><button class="show3d" type="button">ดูใน 3D</button></td></tr>
+              <tr class="link" data-el="profile"><td><code>img</code> และ <code>src</code></td><td>แสดงภาพและระบุตำแหน่งไฟล์ภาพ</td><td><button class="show3d" type="button">ดูใน 3D</button></td></tr>
+              <tr class="link" data-el="profile"><td><code>alt</code></td><td>ข้อความทดแทนที่อธิบายภาพ</td><td><button class="show3d" type="button">ดูใน 3D</button></td></tr>
+              <tr class="link" data-el="figure"><td><code>figure</code> และ <code>figcaption</code></td><td>จัดกลุ่มภาพและคำอธิบาย</td><td><button class="show3d" type="button">ดูใน 3D</button></td></tr>
+              <tr class="link" data-el="footer"><td><code>footer</code></td><td>ส่วนท้ายของหน้าเว็บ</td><td><button class="show3d" type="button">ดูใน 3D</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="num">4</div>
+      <div>
+        <h3>เพิ่ม CSS ให้เว็บ</h3>
+        <p>สร้าง style.css ข้าง index.html ใส่โค้ดนี้ บันทึก แล้วรีเฟรช จะเห็นพื้นหลัง เมนู และกล่องเนื้อหา</p>
+        <div class="code" data-lang="css" data-src="c-step4" data-name="style.css"></div>
+        <p class="note">ทดลองเปลี่ยน <code>#173b73</code> เป็น <code>#6d28d9</code> ทั้งสองตำแหน่ง แล้วสังเกตสีของส่วนหัวและปุ่ม <b>ลองกดสีม่วงที่แถบเครื่องมือของโมเดลด้านบนเพื่อดูผลก่อนแก้จริง</b></p>
+      </div>
+    </article>
+
+    <article class="step">
+      <div class="num">5</div>
+      <div>
+        <h3>ภารกิจฝึกปฏิบัติและตรวจสอบก่อนส่งงาน</h3>
+        <p>ติ๊กแต่ละข้อเมื่อทำเสร็จ รายการที่ติ๊กไว้จะจำไว้ในเบราว์เซอร์นี้</p>
+        <div class="check-grid">
+          <div class="card" data-group="mission">
+            <h3>ภารกิจฝึกปฏิบัติ</h3>
+            <div class="prog"><div class="bar"><i></i></div><span class="cnt">0/5</span></div>
+            <label class="ck"><input type="checkbox" id="ms1"><span>เปลี่ยนชื่อ ประวัติ และทักษะเป็นข้อมูลของตนเอง</span></label>
+            <label class="ck"><input type="checkbox" id="ms2"><span>เปลี่ยนรูปประจำตัวและภาพผลงาน พร้อมเขียน alt ให้ตรงกับภาพ</span></label>
+            <label class="ck"><input type="checkbox" id="ms3"><span>เพิ่มผลงานให้ครบ 3 ชิ้น โดยคัดลอกตั้งแต่ &lt;figure class="card"&gt; ถึง &lt;/figure&gt; แล้วเปลี่ยนภาพ ชื่อ และคำอธิบายของแต่ละชิ้น</span></label>
+            <label class="ck"><input type="checkbox" id="ms4"><span>เปลี่ยนสีหลักของเว็บและแก้ช่องทางติดต่อให้ถูกต้อง</span></label>
+            <label class="ck"><input type="checkbox" id="ms5"><span>ย่อหน้าต่างเบราว์เซอร์เพื่อทดสอบว่าเมนู ข้อความ และภาพยังแสดงครบ</span></label>
+          </div>
+          <div class="card" data-group="submit">
+            <h3>ตรวจสอบก่อนส่งงาน</h3>
+            <div class="prog"><div class="bar"><i></i></div><span class="cnt">0/4</span></div>
+            <label class="ck"><input type="checkbox" id="sb1"><span>ชื่อและข้อมูลเป็นของผู้จัดทำ รูปภาพแสดงครบ และมีผลงาน 3 ชิ้น</span></label>
+            <label class="ck"><input type="checkbox" id="sb2"><span>เมนูทั้ง 4 รายการเชื่อมไปยังหัวข้อที่ถูกต้อง</span></label>
+            <label class="ck"><input type="checkbox" id="sb3"><span>CSS ทำงาน และหน้าเว็บอ่านได้เมื่อย่อหน้าต่าง</span></label>
+            <label class="ck"><input type="checkbox" id="sb4"><span>ส่งโฟลเดอร์ my-portfolio ทั้งโฟลเดอร์เป็นไฟล์ ZIP พร้อมภาพหน้าจอเว็บ</span></label>
+            <div class="warn"><b>ห้ามส่งเฉพาะ index.html</b> เพราะไฟล์ CSS และภาพจะหายไป</div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <h2 class="section-title">แก้ปัญหาที่พบบ่อย</h2>
+  <p class="section-sub">กดที่อาการเพื่อดูแนวทางตรวจสอบ</p>
+  <div>
+    <details><summary>ภาพไม่ขึ้น</summary><p>ตรวจชื่อไฟล์ นามสกุล ตัวพิมพ์ใหญ่เล็ก และตำแหน่งโฟลเดอร์ img</p></details>
+    <details><summary>สีและการจัดวางไม่เปลี่ยน</summary><p>ตรวจชื่อ style.css และค่า href ใน link ให้ตรงกัน</p></details>
+    <details><summary>แก้แล้วเว็บยังเหมือนเดิม</summary><p>บันทึกไฟล์แล้วรีเฟรช ตรวจว่าเปิด index.html จากโฟลเดอร์ที่กำลังแก้</p></details>
+    <details><summary>เมนูไม่เลื่อนไปหัวข้อ</summary><p>ตรวจ href="#..." ให้ตรงกับ id และให้แต่ละ id ไม่ซ้ำ</p></details>
+    <details><summary>เปิดแล้วเห็นโค้ดเป็นข้อความ</summary><p>ตรวจนามสกุลว่าเป็น .html ไม่ใช่ .txt</p></details>
+  </div>
+
+  <div class="src">
+    <b>แหล่งเรียนรู้ประกอบ</b><br>
+    BorntoDev บทความ สร้างหน้าเว็บแรกของคุณด้วย HTML โดย สุดเขตต์ พิทักษ์พลางกูร เผยแพร่วันที่ 5 พฤศจิกายน 2023<br>
+    <a href="https://www.borntodev.com/2023/11/05/%E0%B8%AA%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%87%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%E0%B9%80%E0%B8%A7%E0%B9%87%E0%B8%9A%E0%B9%81%E0%B8%A3%E0%B8%81%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%84%E0%B8%B8%E0%B8%93/" target="_blank" rel="noopener">https://www.borntodev.com/2023/11/05/สร้างหน้าเว็บแรกของคุณ/</a>
+  </div>
+</div>
+
+<script type="text/plain" id="c-step2"><!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio ของฉัน</title>
+</head>
+<body>
+  <h1>สวัสดี นี่คือเว็บไซต์แรกของฉัน</h1>
+  <p>ฉันกำลังเรียนรู้การสร้างเว็บไซต์ด้วย HTML</p>
+</body>
+</html></script>
+
+<script type="text/plain" id="c-step3a"><!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio ของฉัน</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <nav>
+      <h1>MY PORTFOLIO</h1>
+      <div>
+        <a href="#home">หน้าแรก</a>
+        <a href="#about">เกี่ยวกับฉัน</a>
+        <a href="#portfolio">ผลงาน</a>
+        <a href="#contact">ติดต่อ</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <img class="profile" src="img/profile.jpg"
+           alt="รูปประจำตัวของฉัน">
+      <h2>สวัสดีครับ ผมชื่อ สมชาย</h2>
+      <p>นักศึกษาที่สนใจการออกแบบเว็บไซต์และสื่อดิจิทัล</p>
+      <a class="button" href="#portfolio">ดูผลงานของฉัน</a>
+    </section>
+
+    <section id="about">
+      <h2>เกี่ยวกับฉัน</h2>
+      <p>ฉันกำลังศึกษาสาขาคอมพิวเตอร์และเทคโนโลยีดิจิทัลเพื่อการศึกษา
+         และชอบเรียนรู้ผ่านการลงมือสร้างผลงาน</p>
+      <h3>ทักษะของฉัน</h3>
+      <ul>
+        <li>สร้างหน้าเว็บด้วย HTML</li>
+        <li>ออกแบบสื่อด้วย Canva</li>
+        <li>สร้างโมเดล 3 มิติด้วย Blender</li>
+      </ul>
+    </section></script>
+
+<script type="text/plain" id="c-step3b">    <section id="portfolio">
+      <h2>ผลงานของฉัน</h2>
+      <figure class="card">
+        <img src="img/work1.jpg"
+             alt="ตัวอย่างผลงานออกแบบโปสเตอร์ของฉัน">
+        <figcaption>
+          <h3>ผลงานที่ 1 โปสเตอร์ประชาสัมพันธ์</h3>
+          <p>ออกแบบเพื่อฝึกการจัดวางข้อความ ภาพ และสี</p>
+        </figcaption>
+      </figure>
+    </section>
+  </main>
+
+  <footer id="contact">
+    <h2>ติดต่อฉัน</h2>
+    <p>อีเมลตัวอย่าง student@example.com</p>
+    <a href="mailto:student@example.com">เขียนอีเมลถึงฉัน</a>
+    <p><small>เว็บไซต์นี้จัดทำเพื่อฝึกเขียน HTML และ CSS</small></p>
+  </footer>
+</body>
+</html></script>
+
+<script type="text/plain" id="c-step4">* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: Tahoma, sans-serif;
+  line-height: 1.8;
+  color: #243047;
+  background: #f3f6fb;
+}
+
+header { color: white; background: #173b73; padding: 20px; }
+
+nav {
+  max-width: 900px;
+  margin: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+nav h1 { margin: 0; font-size: 22px; }
+
+nav a {
+  color: white;
+  display: inline-block;
+  margin-right: 12px;
+  text-decoration: none;
+}
+
+nav a:hover { text-decoration: underline; }
+
+main { max-width: 900px; margin: auto; padding: 20px; }
+
+section {
+  margin-bottom: 24px;
+  padding: 28px;
+  background: white;
+  border-radius: 16px;
+}
+
+.hero { text-align: center; }
+
+.profile {
+  width: 160px; height: 160px;
+  border-radius: 50%; object-fit: cover;
+}
+
+.button {
+  display: inline-block; padding: 10px 20px;
+  color: white; background: #173b73;
+  border-radius: 8px; text-decoration: none;
+}
+
+.card { margin: 0; }
+
+.card img {
+  display: block; width: 100%; max-width: 500px;
+  height: auto; border-radius: 12px;
+}
+
+footer {
+  padding: 30px 20px; text-align: center; background: #e2eaf7;
+}</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+/* ---------------- code highlighting ---------------- */
+function hlTag(m){
+  const r = /^(<\/?!?)([\w]+)([\s\S]*?)(\/?>)$/.exec(m);
+  if(!r) return '<span class="t">'+esc(m)+'</span>';
+  let a="", li=0;
+  r[3].replace(/([\w-]+)="([^"]*)"/g,(mm,n,v,j)=>{
+    a += esc(r[3].slice(li,j)) + '<span class="an">'+n+'</span><span class="p">=</span><span class="av">"'+esc(v)+'"</span>';
+    li = j+mm.length; return mm;
+  });
+  a += esc(r[3].slice(li));
+  return '<span class="t">'+esc(r[1]+r[2])+'</span>'+a+'<span class="t">'+esc(r[4])+'</span>';
+}
+function hlHTML(src){
+  let out="", last=0;
+  src.replace(/<[^>]*>/g,(m,i)=>{ out += esc(src.slice(last,i)) + hlTag(m); last=i+m.length; return m; });
+  return out + esc(src.slice(last));
+}
+function hlCSS(src){
+  let out="";
+  const re = /([^{};]+)(?=\{)|\{|\}|;|([^{};]+)/g; let m;
+  while((m = re.exec(src))){
+    const tok = m[0];
+    if(m[1]!==undefined){ const lead = tok.match(/^\s*/)[0]; out += esc(lead)+'<span class="sel">'+esc(tok.slice(lead.length))+'</span>'; }
+    else if(tok==="{"||tok==="}"||tok===";"){ out += '<span class="p">'+tok+'</span>'; }
+    else {
+      const d = /^(\s*)([\w-]+)(\s*:\s*)([\s\S]*?)(\s*)$/.exec(tok);
+      out += d ? esc(d[1])+'<span class="pr">'+d[2]+'</span><span class="p">'+esc(d[3])+'</span><span class="av">'+esc(d[4])+'</span>'+esc(d[5]) : esc(tok);
+    }
+  }
+  return out;
+}
+const hl = (lang,src) => lang==="css" ? hlCSS(src) : hlHTML(src);
+
+function copyText(btn, text){
+  const done = ok => { btn.textContent = ok ? "คัดลอกแล้ว" : "เลือกข้อความแล้ว กด Ctrl+C"; setTimeout(()=>btn.textContent="คัดลอก",1800); };
+  const fallback = () => {
+    const pre = btn.closest(".code").querySelector("pre");
+    const r = document.createRange(); r.selectNodeContents(pre);
+    const s = getSelection(); s.removeAllRanges(); s.addRange(r); done(false);
+  };
+  try{ navigator.clipboard.writeText(text).then(()=>done(true), fallback); }catch(e){ fallback(); }
+}
+document.querySelectorAll(".code").forEach(box=>{
+  const src = document.getElementById(box.dataset.src).textContent;
+  box.innerHTML = '<div class="code-bar"><span>'+esc(box.dataset.name)+'</span><button class="copy" type="button">คัดลอก</button></div><pre><code>'+hl(box.dataset.lang,src)+'</code></pre>';
+  box.querySelector(".copy").addEventListener("click",e=>copyText(e.currentTarget,src));
+});
+
+/* ---------------- checklist ---------------- */
+const KEY = "portfolio-lab-checks";
+let saved = {}; try{ saved = JSON.parse(localStorage.getItem(KEY)||"{}") }catch(e){}
+function updateProgress(){
+  document.querySelectorAll(".card[data-group]").forEach(card=>{
+    const boxes=[...card.querySelectorAll("input[type=checkbox]")], n=boxes.filter(b=>b.checked).length;
+    card.querySelector(".bar i").style.width = (n/boxes.length*100)+"%";
+    card.querySelector(".cnt").textContent = n+"/"+boxes.length;
+  });
+}
+document.querySelectorAll(".ck input").forEach(b=>{
+  b.checked = !!saved[b.id];
+  b.addEventListener("change",()=>{ saved[b.id]=b.checked; try{ localStorage.setItem(KEY,JSON.stringify(saved)) }catch(e){} updateProgress(); });
+});
+updateProgress();
+
+/* ---------------- page model ---------------- */
+const PW = 960, PH = 1574;           // CSS px of the modelled page
+const U = 100;                       // CSS px per 3D unit
+const FS = 'Tahoma, "IBM Plex Sans Thai", sans-serif';
+const FU = '"Times New Roman", "IBM Plex Sans Thai", serif';
+const INK = "#243047", LINK = "#0000ee";
+
+const ELS = [
+  {key:"body", depth:0, label:'<body>', tree:'<span class="tg">body</span>',
+   rect:()=>({x:0,y:0,w:PW,h:PH}),
+   title:"body", role:"ส่วนที่แสดงผลทั้งหมดในเบราว์เซอร์ ทุกแท็กของหน้านี้อยู่ภายใน body",
+   html:'<body>\n  <header>…</header>\n  <main>…</main>\n  <footer id="contact">…</footer>\n</body>',
+   css:'body {\n  margin: 0;\n  font-family: Tahoma, sans-serif;\n  line-height: 1.8;\n  color: #243047;\n  background: #f3f6fb;\n}',
+   tip:"ใน HTML ล้วน พื้นหลังเป็นสีขาวและตัวอักษรเป็นค่าเริ่มต้นของเบราว์เซอร์ เมื่อเพิ่ม CSS พื้นหลังจะเปลี่ยนเป็น #f3f6fb"},
+  {key:"header", depth:1, label:'<header> <nav>', tree:'<span class="tg">header</span> › <span class="tg">nav</span>',
+   rect:()=>({x:0,y:0,w:PW,h:84}),
+   title:"header และ nav", role:"ส่วนหัวและเมนูนำทาง มีชื่อเว็บใน h1 และลิงก์ 4 รายการ",
+   html:'<header>\n  <nav>\n    <h1>MY PORTFOLIO</h1>\n    <div>\n      <a href="#home">หน้าแรก</a>\n      <a href="#about">เกี่ยวกับฉัน</a>\n      <a href="#portfolio">ผลงาน</a>\n      <a href="#contact">ติดต่อ</a>\n    </div>\n  </nav>\n</header>',
+   css:'header { color: white; background: #173b73; padding: 20px; }\n\nnav {\n  max-width: 900px; margin: auto;\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n}',
+   tip:'<b>จุดสังเกต</b> href="#about" เชื่อมกับ id="about" จึงคลิกเมนูแล้วเลื่อนไปยังหัวข้อในหน้าเดียวกันได้'},
+  {key:"main", depth:1, label:'<main>', tree:'<span class="tg">main</span>',
+   rect:()=>({x:30,y:84,w:900,h:1260}),
+   title:"main", role:"เนื้อหาหลักของหน้า รวม section ทั้งสามส่วนไว้ด้วยกัน",
+   html:'<main>\n  <section id="home" class="hero">…</section>\n  <section id="about">…</section>\n  <section id="portfolio">…</section>\n</main>',
+   css:'main { max-width: 900px; margin: auto; padding: 20px; }',
+   tip:"เส้นประในโมเดลแสดงขอบเขตของ main เพื่อให้เห็นโครงสร้าง บนเว็บจริง main ไม่มีพื้นหลังและมองไม่เห็นเส้นนี้"},
+  {key:"home", depth:2, label:'<section id="home" class="hero">', tree:'<span class="tg">section</span><span class="at">#</span><span class="vl">home</span><span class="at">.</span><span class="vl">hero</span>',
+   rect:()=>({x:50,y:104,w:860,h:372}),
+   title:"section#home", role:"ส่วนแรกของหน้า มีรูปประจำตัว ชื่อใน h2 คำแนะนำตัวใน p และปุ่มลิงก์ไปยังผลงาน",
+   html:'<section id="home" class="hero">\n  <img class="profile" …>\n  <h2>สวัสดีครับ ผมชื่อ สมชาย</h2>\n  <p>นักศึกษาที่สนใจการออกแบบ…</p>\n  <a class="button" href="#portfolio">ดูผลงานของฉัน</a>\n</section>',
+   css:'.hero { text-align: center; }\n\n.button {\n  display: inline-block; padding: 10px 20px;\n  color: white; background: #173b73;\n  border-radius: 8px; text-decoration: none;\n}',
+   tip:"ปุ่ม .button ใช้สี #173b73 เหมือนส่วนหัว ลองเปลี่ยนสีหลักที่แถบเครื่องมือเพื่อดูว่าทั้งสองจุดเปลี่ยนพร้อมกัน"},
+  {key:"profile", depth:3, label:'<img class="profile">', tree:'<span class="tg">img</span><span class="at">.</span><span class="vl">profile</span>',
+   rect:s=> s ? {x:50+430-80,y:104+28,w:160,h:160} : {x:58,y:112,w:200,h:200},
+   title:"img.profile", role:"img แสดงภาพ src ระบุตำแหน่งไฟล์ภาพ และ alt เป็นข้อความทดแทนที่อธิบายภาพ",
+   html:'<img class="profile" src="img/profile.jpg"\n     alt="รูปประจำตัวของฉัน">',
+   css:'.profile {\n  width: 160px; height: 160px;\n  border-radius: 50%; object-fit: cover;\n}',
+   tip:"ตรวจนามสกุลภาพให้ตรงกับโค้ด หากภาพเป็น .png ให้เปลี่ยน src เป็น .png ด้วย ภาพไม่ขึ้นให้ตรวจชื่อไฟล์ ตัวพิมพ์ใหญ่เล็ก และโฟลเดอร์ img"},
+  {key:"about", depth:2, label:'<section id="about">', tree:'<span class="tg">section</span><span class="at">#</span><span class="vl">about</span>',
+   rect:()=>({x:50,y:500,w:860,h:330}),
+   title:"section#about", role:"ประวัติและทักษะ ใช้ h2 h3 สำหรับหัวข้อ p สำหรับย่อหน้า และ ul กับ li สำหรับรายการ",
+   html:'<section id="about">\n  <h2>เกี่ยวกับฉัน</h2>\n  <p>ฉันกำลังศึกษาสาขา…</p>\n  <h3>ทักษะของฉัน</h3>\n  <ul>\n    <li>สร้างหน้าเว็บด้วย HTML</li>\n    …\n  </ul>\n</section>',
+   css:'section {\n  margin-bottom: 24px;\n  padding: 28px;\n  background: white;\n  border-radius: 16px;\n}',
+   tip:'id="about" ต้องไม่ซ้ำกับ id อื่นในหน้า เมนูจึงเลื่อนมาถูกหัวข้อ'},
+  {key:"portfolio", depth:2, label:'<section id="portfolio">', tree:'<span class="tg">section</span><span class="at">#</span><span class="vl">portfolio</span>',
+   rect:()=>({x:50,y:854,w:860,h:470}),
+   title:"section#portfolio", role:"รวมผลงาน แต่ละชิ้นอยู่ใน figure.card หนึ่งชุด",
+   html:'<section id="portfolio">\n  <h2>ผลงานของฉัน</h2>\n  <figure class="card">…</figure>\n</section>',
+   css:'section {\n  padding: 28px;\n  background: white;\n  border-radius: 16px;\n}',
+   tip:'ภารกิจข้อ 3 เพิ่มผลงานให้ครบ 3 ชิ้น โดยคัดลอกตั้งแต่ &lt;figure class="card"&gt; ถึง &lt;/figure&gt; แล้วเปลี่ยนภาพ ชื่อ และคำอธิบาย'},
+  {key:"figure", depth:3, label:'<figure class="card">', tree:'<span class="tg">figure</span><span class="at">.</span><span class="vl">card</span>',
+   rect:s=> s ? {x:78,y:854+84,w:500,h:370} : {x:98,y:854+84,w:500,h:370},
+   title:"figure.card", role:"figure และ figcaption จัดกลุ่มภาพผลงานกับชื่อและคำอธิบายไว้ด้วยกัน",
+   html:'<figure class="card">\n  <img src="img/work1.jpg"\n       alt="ตัวอย่างผลงานออกแบบโปสเตอร์ของฉัน">\n  <figcaption>\n    <h3>ผลงานที่ 1 โปสเตอร์ประชาสัมพันธ์</h3>\n    <p>ออกแบบเพื่อฝึกการจัดวางข้อความ ภาพ และสี</p>\n  </figcaption>\n</figure>',
+   css:'.card { margin: 0; }\n\n.card img {\n  display: block; width: 100%; max-width: 500px;\n  height: auto; border-radius: 12px;\n}',
+   tip:"ใน HTML ล้วน figure จะเยื้องเข้ามาเพราะเบราว์เซอร์ใส่ margin ให้ CSS .card { margin: 0; } จึงดึงกลับมาชิดซ้าย"},
+  {key:"footer", depth:1, label:'<footer id="contact">', tree:'<span class="tg">footer</span><span class="at">#</span><span class="vl">contact</span>',
+   rect:()=>({x:0,y:1344,w:PW,h:230}),
+   title:"footer#contact", role:"ส่วนท้ายของหน้าเว็บ ใช้เป็นช่องทางติดต่อ และเป็นปลายทางของเมนู ติดต่อ",
+   html:'<footer id="contact">\n  <h2>ติดต่อฉัน</h2>\n  <p>อีเมลตัวอย่าง student@example.com</p>\n  <a href="mailto:student@example.com">เขียนอีเมลถึงฉัน</a>\n  <p><small>…</small></p>\n</footer>',
+   css:'footer {\n  padding: 30px 20px;\n  text-align: center;\n  background: #e2eaf7;\n}',
+   tip:"ลิงก์ mailto ขอเปิดแอปอีเมลที่ตั้งค่าไว้ ไม่ได้ส่งอีเมลอัตโนมัติ เปลี่ยนอีเมลตัวอย่างเป็นของจริงก่อนใช้งาน"}
+];
+const byKey = Object.fromEntries(ELS.map(e=>[e.key,e]));
+
+const state = { styled:true, accent:"#173b73", explode:1.4, target:1.4, sel:"about" };
+
+/* ---------------- inspector ---------------- */
+const tree = $("#tree"), ins = $("#ins");
+ELS.forEach(e=>{
+  const li = document.createElement("li");
+  const b = document.createElement("button"); b.type="button"; b.dataset.k=e.key;
+  b.style.paddingLeft = (8+e.depth*16)+"px";
+  b.innerHTML = '<span class="p">&lt;</span>'+e.tree+'<span class="p">&gt;</span>';
+  b.addEventListener("click",()=>select(e.key));
+  li.appendChild(b); tree.appendChild(li);
+});
+function renderInspector(){
+  const e = byKey[state.sel];
+  tree.querySelectorAll("button").forEach(b=>b.setAttribute("aria-current", b.dataset.k===state.sel ? "true":"false"));
+  const css = state.styled
+    ? '<div><div class="mini-label">style.css</div><pre class="mini">'+hlCSS(e.css.replace(/#173b73/g,state.accent))+'</pre></div>'
+    : '<p class="muted">ยังไม่มี CSS หน้าตาที่เห็นคือค่าเริ่มต้นของเบราว์เซอร์ กด HTML + CSS เพื่อดูผลหลังเพิ่ม style.css</p>';
+  ins.innerHTML =
+    '<div><h3>'+esc(e.title)+'</h3><div class="depth">ระดับความลึก '+e.depth+' ใน body</div></div>'+
+    '<p class="role">'+e.role+'</p>'+
+    '<div><div class="mini-label">index.html</div><pre class="mini">'+hlHTML(e.html)+'</pre></div>'+
+    css + '<div class="tip">'+e.tip+'</div>';
+  $("#mode-label").textContent = state.styled ? "html + css" : "html only";
+}
+
+/* ---------------- canvas drawing ---------------- */
+function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath(); }
+const seg = (typeof Intl!=="undefined" && Intl.Segmenter) ? new Intl.Segmenter("th",{granularity:"word"}) : null;
+function wrap(c,text,x,y,maxW,lh,align){
+  const parts = seg ? [...seg.segment(text)].map(s=>s.segment) : text.split("");
+  let line="", yy=y; const lines=[];
+  parts.forEach(p=>{ const t=line+p; if(c.measureText(t).width>maxW && line){ lines.push(line); line=p.trimStart(); } else line=t; });
+  if(line) lines.push(line);
+  c.textAlign = align||"left";
+  lines.forEach(l=>{ c.fillText(l,x,yy); yy+=lh; });
+  return yy;
+}
+function link(c,text,x,y,color,align){
+  c.fillStyle=color; c.textAlign=align||"left"; c.fillText(text,x,y);
+  const w=c.measureText(text).width, sx = align==="center"? x-w/2 : x;
+  c.fillRect(sx,y+3,w,1.4);
+}
+function portrait(c,x,y,w,h){
+  const g=c.createLinearGradient(x,y,x+w,y+h); g.addColorStop(0,"#f6c89f"); g.addColorStop(1,"#e9876b");
+  c.fillStyle=g; c.fillRect(x,y,w,h);
+  c.fillStyle="#3b2a2a"; c.beginPath(); c.arc(x+w/2,y+h*.42,w*.19,0,Math.PI*2); c.fill();
+  c.fillStyle="#2b3a5c"; c.beginPath(); c.ellipse(x+w/2,y+h*1.02,w*.38,h*.36,0,0,Math.PI*2); c.fill();
+  c.fillStyle="#f3d2b3"; c.beginPath(); c.arc(x+w/2,y+h*.45,w*.15,0,Math.PI*2); c.fill();
+}
+function poster(c,x,y,w,h){
+  c.fillStyle="#1f2a44"; c.fillRect(x,y,w,h);
+  c.fillStyle="#f2b43c"; c.beginPath(); c.arc(x+w*.72,y+h*.42,h*.34,0,Math.PI*2); c.fill();
+  c.fillStyle="#e2574c"; c.fillRect(x+w*.06,y+h*.62,w*.5,h*.1);
+  c.fillStyle="#7cc4b6"; c.fillRect(x+w*.06,y+h*.76,w*.32,h*.06);
+  c.fillStyle="#ffffff"; c.font='700 40px '+FS; c.textAlign="left"; c.fillText("OPEN",x+w*.06,y+h*.3); c.fillText("HOUSE",x+w*.06,y+h*.48);
+}
+
+function draw(e,c,w,h){
+  const S = state.styled, A = state.accent;
+  c.clearRect(0,0,w,h); c.textBaseline="alphabetic";
+  const font = (wt,sz)=> c.font = wt+" "+sz+"px "+(S?FS:FU);
+  switch(e.key){
+  case "body":
+    c.fillStyle = S ? "#f3f6fb" : "#ffffff"; c.fillRect(0,0,w,h); break;
+  case "header":
+    if(S){ c.fillStyle=A; c.fillRect(0,0,w,h);
+      c.fillStyle="#fff"; font("bold",22); c.textAlign="left"; c.fillText("MY PORTFOLIO",30,50);
+      font("normal",16); let xx=w-30; ["ติดต่อ","ผลงาน","เกี่ยวกับฉัน","หน้าแรก"].forEach(t=>{ const tw=c.measureText(t).width; xx-=tw; c.fillText(t,xx,49); xx-=24; });
+    } else { c.fillStyle="#000"; font("bold",32); c.textAlign="left"; c.fillText("MY PORTFOLIO",8,38);
+      font("normal",16); let xx=8; ["หน้าแรก","เกี่ยวกับฉัน","ผลงาน","ติดต่อ"].forEach(t=>{ link(c,t,xx,72,LINK); xx+=c.measureText(t).width+6; });
+    } break;
+  case "main":
+    c.setLineDash([10,8]); c.lineWidth=2; c.strokeStyle = S ? "rgba(23,59,115,.45)" : "rgba(0,0,0,.35)";
+    c.fillStyle = "rgba(23,59,115,.04)"; c.fillRect(1,1,w-2,h-2); c.strokeRect(1,1,w-2,h-2); c.setLineDash([]); break;
+  case "home":
+    if(S){ c.fillStyle="#fff"; rr(c,0,0,w,h,16); c.fill();
+      c.fillStyle=INK; font("bold",26); c.textAlign="center"; c.fillText("สวัสดีครับ ผมชื่อ สมชาย",w/2,230);
+      font("normal",16); c.fillText("นักศึกษาที่สนใจการออกแบบเว็บไซต์และสื่อดิจิทัล",w/2,266);
+      c.fillStyle=A; rr(c,w/2-82,290,164,46,8); c.fill(); c.fillStyle="#fff"; c.fillText("ดูผลงานของฉัน",w/2,319);
+    } else { c.fillStyle="#000"; font("bold",24); c.textAlign="left"; c.fillText("สวัสดีครับ ผมชื่อ สมชาย",8,246);
+      font("normal",16); c.fillText("นักศึกษาที่สนใจการออกแบบเว็บไซต์และสื่อดิจิทัล",8,282); link(c,"ดูผลงานของฉัน",8,312,LINK);
+    } break;
+  case "about": {
+    const x = S?28:8, col = S?INK:"#000";
+    if(S){ c.fillStyle="#fff"; rr(c,0,0,w,h,16); c.fill(); }
+    c.fillStyle=col; font("bold",S?26:24); c.textAlign="left"; c.fillText("เกี่ยวกับฉัน",x,60);
+    font("normal",16); let yy = wrap(c,"ฉันกำลังศึกษาสาขาคอมพิวเตอร์และเทคโนโลยีดิจิทัลเพื่อการศึกษา และชอบเรียนรู้ผ่านการลงมือสร้างผลงาน",x,100,w-x*2,S?29:22);
+    font("bold",S?20:19); c.fillText("ทักษะของฉัน",x,yy+22);
+    font("normal",16); ["สร้างหน้าเว็บด้วย HTML","ออกแบบสื่อด้วย Canva","สร้างโมเดล 3 มิติด้วย Blender"].forEach((t,i)=>{
+      const ly=yy+60+i*(S?29:22); c.beginPath(); c.arc(x+22,ly-5,3,0,Math.PI*2); c.fill(); c.fillText(t,x+40,ly); });
+    break; }
+  case "portfolio": {
+    const x = S?28:8;
+    if(S){ c.fillStyle="#fff"; rr(c,0,0,w,h,16); c.fill(); }
+    c.fillStyle=S?INK:"#000"; font("bold",S?26:24); c.textAlign="left"; c.fillText("ผลงานของฉัน",x,60);
+    break; }
+  case "profile":
+    c.save(); if(S){ c.beginPath(); c.arc(w/2,h/2,w/2,0,Math.PI*2); c.clip(); } portrait(c,0,0,w,h); c.restore(); break;
+  case "figure":
+    c.save(); if(S){ rr(c,0,0,500,260,12); c.clip(); } poster(c,0,0,500,260); c.restore();
+    c.fillStyle=S?INK:"#000"; font("bold",19); c.textAlign="left"; c.fillText("ผลงานที่ 1 โปสเตอร์ประชาสัมพันธ์",0,300);
+    font("normal",16); c.fillText("ออกแบบเพื่อฝึกการจัดวางข้อความ ภาพ และสี",0,336); break;
+  case "footer":
+    if(S){ c.fillStyle="#e2eaf7"; c.fillRect(0,0,w,h);
+      c.fillStyle=INK; font("bold",26); c.textAlign="center"; c.fillText("ติดต่อฉัน",w/2,66);
+      font("normal",16); c.fillText("อีเมลตัวอย่าง student@example.com",w/2,108); link(c,"เขียนอีเมลถึงฉัน",w/2,142,LINK,"center");
+      font("normal",13); c.fillStyle=INK; c.fillText("เว็บไซต์นี้จัดทำเพื่อฝึกเขียน HTML และ CSS",w/2,184);
+    } else { c.fillStyle="#000"; font("bold",24); c.textAlign="left"; c.fillText("ติดต่อฉัน",8,40);
+      font("normal",16); c.fillText("อีเมลตัวอย่าง student@example.com",8,80); link(c,"เขียนอีเมลถึงฉัน",8,110,LINK);
+      font("normal",13); c.fillStyle="#000"; c.fillText("เว็บไซต์นี้จัดทำเพื่อฝึกเขียน HTML และ CSS",8,146);
+    } break;
+  }
+}
+
+/* ---------------- three.js scene ---------------- */
+const stage = $("#viewport");
+let renderer, scene, camera, controls, ray, ptr, guideMat, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const meshes = [];
+let camTween = null;
+
+function cssVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+function makeLabel(text){
+  const cv=document.createElement("canvas"), c=cv.getContext("2d"), f='500 30px "IBM Plex Mono", monospace';
+  c.font=f; const tw=c.measureText(text).width; cv.width=Math.ceil(tw+36); cv.height=52;
+  const tex=new THREE.CanvasTexture(cv); tex.anisotropy=4;
+  const mat=new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false});
+  const sp=new THREE.Sprite(mat); sp.renderOrder=50;
+  const h=.3; sp.scale.set(h*cv.width/cv.height,h,1); sp.center.set(0,0);
+  sp.userData={cv,c,text,font:f,tex};
+  return sp;
+}
+function paintLabel(sp,active){
+  const {cv,c,text,font,tex}=sp.userData;
+  c.clearRect(0,0,cv.width,cv.height);
+  c.fillStyle = active ? "#e09422" : "#1a2333"; rr(c,0,0,cv.width,cv.height,10); c.fill();
+  c.fillStyle = active ? "#1a1205" : "#ffffff"; c.font=font; c.textBaseline="middle"; c.textAlign="left"; c.fillText(text,18,cv.height/2+1);
+  tex.needsUpdate=true;
+}
+
+function build(){
+  try{
+    renderer = new THREE.WebGLRenderer({antialias:true,alpha:true});
+  }catch(err){ stage.insertAdjacentHTML("beforeend",'<div class="nogl">เบราว์เซอร์นี้แสดงภาพ 3 มิติไม่ได้ ใช้รายการแท็กด้านข้างเพื่อดูรายละเอียดของแต่ละส่วนแทน</div>'); return false; }
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setClearColor(0x000000,0);
+  stage.prepend(renderer.domElement);
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(38,1,.1,200);
+  camera.position.set(17,4,22);
+  controls = new THREE.OrbitControls(camera,renderer.domElement);
+  controls.target.set(0,0,1.6); controls.enableDamping=true; controls.dampingFactor=.08;
+  controls.minDistance=6; controls.maxDistance=45;
+  controls.autoRotate=!reduce; controls.autoRotateSpeed=.5;
+  ["pointerdown","wheel"].forEach(ev=>renderer.domElement.addEventListener(ev,()=>{controls.autoRotate=false; camTween=null;},{passive:true}));
+  ray = new THREE.Raycaster(); ptr = new THREE.Vector2();
+  guideMat = new THREE.LineDashedMaterial({color:new THREE.Color(cssVar("--muted")||"#5a6477"),dashSize:.12,gapSize:.1,transparent:true,opacity:.55});
+
+  ELS.forEach(e=>{
+    const cv=document.createElement("canvas");
+    const tex=new THREE.CanvasTexture(cv); tex.anisotropy=renderer.capabilities.getMaxAnisotropy();
+    tex.minFilter=THREE.LinearMipmapLinearFilter;
+    const mat=new THREE.MeshBasicMaterial({map:tex,transparent:true,side:THREE.DoubleSide,depthWrite:e.depth===0});
+    const mesh=new THREE.Mesh(new THREE.PlaneGeometry(1,1),mat);
+    mesh.renderOrder=e.depth*2; mesh.userData.key=e.key;
+    const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(1,1)),new THREE.LineBasicMaterial({color:0xe09422,transparent:true,opacity:0}));
+    edge.renderOrder=40; mesh.add(edge);
+    const label=makeLabel(e.label); scene.add(label);
+    const guide=new THREE.LineSegments(new THREE.BufferGeometry(),guideMat);
+    scene.add(mesh); scene.add(guide);
+    e.cv=cv; e.tex=tex; e.mesh=mesh; e.edge=edge; e.label=label; e.guide=guide;
+    meshes.push(mesh);
+  });
+
+  let down=null;
+  const pick = ev => {
+    const r=renderer.domElement.getBoundingClientRect();
+    ptr.set(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1);
+    ray.setFromCamera(ptr,camera);
+    const hits=ray.intersectObjects(meshes,false).filter(h=>{
+      // ignore fully transparent pixels of image layers: fall back to topmost depth
+      return true;
+    });
+    if(!hits.length) return null;
+    // prefer the hit with greatest depth among those within a small distance of the first hit
+    hits.sort((a,b)=>a.distance-b.distance);
+    return hits[0].object.userData.key;
+  };
+  renderer.domElement.addEventListener("pointerdown",ev=>{down={x:ev.clientX,y:ev.clientY};});
+  renderer.domElement.addEventListener("pointerup",ev=>{
+    if(down && Math.hypot(ev.clientX-down.x,ev.clientY-down.y)<6){ const k=pick(ev); if(k) select(k); }
+    down=null;
+  });
+  renderer.domElement.addEventListener("pointermove",ev=>{
+    if(ev.buttons) return;
+    renderer.domElement.classList.toggle("hover",!!pick(ev));
+  });
+
+  new ResizeObserver(resize).observe(stage); resize();
+  return true;
+}
+function resize(){
+  if(!renderer) return;
+  const w=stage.clientWidth,h=stage.clientHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h;
+  camera.fov = w/h < .8 ? 52 : 38;
+  camera.updateProjectionMatrix();
+}
+
+function paintAll(){
+  ELS.forEach(e=>{
+    const r=e.rect(state.styled), sc=2;
+    if(e.cv.width!==r.w*sc||e.cv.height!==r.h*sc){ e.cv.width=r.w*sc; e.cv.height=r.h*sc; }
+    const c=e.cv.getContext("2d"); c.setTransform(sc,0,0,sc,0,0);
+    draw(e,c,r.w,r.h);
+    if(e.tex){ e.tex.dispose(); e.tex.needsUpdate=true; }
+    e.r=r;
+  });
+  renderInspector();
+}
+
+function layout(){
+  const ex=state.explode;
+  ELS.forEach(e=>{
+    const r=e.r, z=e.depth*(ex+.03);
+    const cx=(r.x+r.w/2)/U-PW/U/2, cy=PH/U/2-(r.y+r.h/2)/U;
+    e.mesh.scale.set(r.w/U,r.h/U,1); e.mesh.position.set(cx,cy,z);
+    const lx=r.x/U-PW/U/2, ty=PH/U/2-r.y/U;
+    e.label.position.set(lx+(e.depth===0?0:.08), ty+(e.depth===0?.12:-.02)-(e.key==="header"?0:0), z+.02);
+    if(e.depth===0) e.label.position.y = PH/U/2+.12;
+    else e.label.position.y = ty-.36;
+    e.label.material.opacity = Math.max(0,Math.min(1,(ex-.15)/.5));
+    // guides from corners down to the body plane
+    if(e.depth>0 && ex>.05){
+      const x0=lx,x1=lx+r.w/U,y0=ty,y1=ty-r.h/U, pts=[];
+      [[x0,y0],[x1,y0],[x0,y1],[x1,y1]].forEach(([x,y])=>{pts.push(x,y,z, x,y,0);});
+      e.guide.geometry.setAttribute("position",new THREE.Float32BufferAttribute(pts,3));
+      e.guide.computeLineDistances(); e.guide.visible=true;
+    } else e.guide.visible=false;
+  });
+}
+
+function select(k){
+  state.sel=k;
+  if(renderer) ELS.forEach(e=>{ e.edge.material.opacity = e.key===k?1:0; paintLabel(e.label,e.key===k); });
+  renderInspector();
+}
+
+function setView(which){
+  const to = which==="front" ? {p:new THREE.Vector3(0,0,27),t:new THREE.Vector3(0,0,0)} : {p:new THREE.Vector3(17,4,22),t:new THREE.Vector3(0,0,1.6)};
+  if(which==="front"){ state.target=0; $("#explode").value=0; }
+  else if(state.target<.6){ state.target=1.4; $("#explode").value=1.4; }
+  controls.autoRotate=false;
+  if(reduce){ camera.position.copy(to.p); controls.target.copy(to.t); return; }
+  camTween={from:camera.position.clone(),ft:controls.target.clone(),to,t:0};
+}
+
+function tick(){
+  requestAnimationFrame(tick);
+  const d=state.target-state.explode;
+  if(Math.abs(d)>.001){ state.explode += reduce ? d : d*.12; layout(); }
+  if(camTween){
+    camTween.t=Math.min(1,camTween.t+.025); const s=camTween.t, e=s<.5?2*s*s:1-Math.pow(-2*s+2,2)/2;
+    camera.position.lerpVectors(camTween.from,camTween.to.p,e); controls.target.lerpVectors(camTween.ft,camTween.to.t,e);
+    if(s>=1) camTween=null;
+  }
+  controls.update(); renderer.render(scene,camera);
+}
+
+/* ---------------- controls wiring ---------------- */
+function setMode(styled){
+  state.styled=styled;
+  $("#m-css").setAttribute("aria-pressed",styled); $("#m-html").setAttribute("aria-pressed",!styled);
+  paintAll(); if(renderer) layout();
+}
+$("#m-css").addEventListener("click",()=>setMode(true));
+$("#m-html").addEventListener("click",()=>setMode(false));
+$("#explode").addEventListener("input",e=>{ state.target=+e.target.value; });
+function setAccent(c){
+  state.accent=c; $("#custom-color").value=c;
+  document.querySelectorAll(".sw").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===c));
+  if(!state.styled) setMode(true); else paintAll();
+}
+document.querySelectorAll(".sw").forEach(b=>b.addEventListener("click",()=>setAccent(b.dataset.c)));
+$("#custom-color").addEventListener("input",e=>setAccent(e.target.value));
+$("#v-front").addEventListener("click",()=>renderer&&setView("front"));
+$("#v-angle").addEventListener("click",()=>renderer&&setView("angle"));
+document.querySelectorAll("#tag-table tr.link").forEach(tr=>tr.addEventListener("click",()=>{
+  select(tr.dataset.el);
+  if(renderer && state.target<.6){ state.target=1.4; $("#explode").value=1.4; }
+  $("#stage").scrollIntoView({behavior:reduce?"auto":"smooth",block:"center"});
+}));
+const themeSync=()=>{ if(guideMat) guideMat.color.set(cssVar("--muted")||"#5a6477"); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",themeSync);
+new MutationObserver(themeSync).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+
+/* ---------------- boot ---------------- */
+const ok = (typeof THREE!=="undefined" && THREE.OrbitControls) ? build() : (stage.insertAdjacentHTML("beforeend",'<div class="nogl">โหลดไลบรารี 3 มิติไม่สำเร็จ ลองรีเฟรชหน้า หรือใช้รายการแท็กด้านข้างแทน</div>'), false);
+if(!ok) $("#hint").hidden=true;
+paintAll();
+select(state.sel);
+if(ok){ layout(); tick(); }
+const fontsReady = Promise.all([
+  document.fonts.load('400 16px "IBM Plex Sans Thai"'),
+  document.fonts.load('700 16px "IBM Plex Sans Thai"'),
+  document.fonts.load('500 30px "IBM Plex Mono"')
+]).catch(()=>{});
+fontsReady.then(()=>{ paintAll(); if(ok){ ELS.forEach(e=>paintLabel(e.label,e.key===state.sel)); layout(); } });
+})();
+</script>
+
+</body>
+</html>
